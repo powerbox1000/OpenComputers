@@ -1445,6 +1445,9 @@ local libcomputer = {
   getCallBudget = function ()
     return libcomponent.invoke(computer.address(), "getCallBudget")
   end,
+  getSignalQueueSize = function ()
+    return libcomponent.invoke(computer.address(), "getSignalQueueSize")
+  end,
 
   getArchitectures = function(...)
     return spcall(computer.getArchitectures, ...)

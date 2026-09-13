@@ -522,6 +522,10 @@ class Machine(val host: MachineHost) extends AbstractManagedEnvironment with mac
   @Callback(direct = true, doc="""function():number -- Returns the remaining call budget""")
   def getCallBudget(context: Context, args: Arguments): Array[AnyRef] =
     result(callBudget)
+  
+  @Callback(direct = true, doc="""function():number -- Returns the size of the signal queue""")
+  def getSignalQueueSize(context: Context, args: Arguments): Array[AnyRef] =
+    result(signals.size)
 
   // ----------------------------------------------------------------------- //
 
