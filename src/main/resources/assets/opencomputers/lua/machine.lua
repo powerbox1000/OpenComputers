@@ -840,11 +840,23 @@ sandbox = {
 
   coroutine = {
     create = coroutine.create,
-    resume = function(co, ...) -- custom resume part for bubbling sysyields
+    resume = function (co, ...)
+      return sandbox.coroutine.resumeWithInterruptor(co, nil, ...)
+    end,
+    resumeWithInterruptor = function(co, interruptor, ...) -- custom resume part for bubbling sysyields + custom interrupts
       checkArg(1, co, "thread")
+      checkArg(2, interruptor, "function", "nil")
       local args = table.pack(...)
       while true do -- for consecutive sysyields
-        debug.sethook(co, checkDeadline, "", hookInterval)
+        debug.sethook(co, function ()
+          checkDeadline() -- run first to prevent sandbox exploits
+          if interruptor ~= nil then
+            local tmpco = coroutine.create(interruptor)
+            debug.sethook(tmpco, checkDeadline, "", hookInterval) -- don't let interruptor bypass deadline checks
+            local success, reason = coroutine.resume(tmpco)
+            if not success then error(reason or "interrupted", 0) end -- unfortunately this is the best way to allow interruption
+          end
+        end, "", hookInterval)
         local result = table.pack(
           coroutine.resume(co, table.unpack(args, 1, args.n)))
         debug.sethook(co) -- avoid gc issues
@@ -1429,6 +1441,9 @@ local libcomputer = {
   end,
   getProgramLocations = function()
     return libcomponent.invoke(computer.address(), "getProgramLocations")
+  end,
+  getCallBudget = function ()
+    return libcomponent.invoke(computer.address(), "getCallBudget")
   end,
 
   getArchitectures = function(...)

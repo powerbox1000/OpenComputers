@@ -518,6 +518,10 @@ class Machine(val host: MachineHost) extends AbstractManagedEnvironment with mac
   @Callback(doc = """function():table -- Returns a map of program name to disk label for known programs.""")
   def getProgramLocations(context: Context, args: Arguments): Array[AnyRef] =
     result(ProgramLocations.getMappings(Machine.getArchitectureName(architecture.getClass)))
+  
+  @Callback(direct = true, doc="""function():number -- Returns the remaining call budget""")
+  def getCallBudget(context: Context, args: Arguments): Array[AnyRef] =
+    result(callBudget)
 
   // ----------------------------------------------------------------------- //
 
