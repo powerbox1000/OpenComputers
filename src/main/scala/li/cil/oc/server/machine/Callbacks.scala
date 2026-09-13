@@ -61,7 +61,7 @@ object Callbacks {
           (priority, () => {
             val direct = peripheral.directMethods()
             for (name <- peripheral.methods() if filter(name)) {
-              callbacks += name -> new PeripheralCallback(name, direct.contains(name))
+              callbacks += name -> new PeripheralCallback(name, direct != null && direct.contains(name))
             }
             staticAnalyze(environment.getClass, Option(filter), Option(callbacks))
           })
