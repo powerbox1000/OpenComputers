@@ -179,7 +179,7 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
             final ILuaContext luaContext;
 
             if (Arrays.stream(directMethodNames).anyMatch(name::equals)) {
-                luaContext = new AsynchronousLuaContext();
+                luaContext = new AsynchronousLuaContext(context);
             } else {
                 luaContext = new SynchronousLuaContext(context, nextTaskId);
             }
@@ -571,14 +571,23 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
          * TODO find a better solution
          */
         public static final class AsynchronousLuaContext implements ILuaContext {
+            private final Context context;
+
+            public AsynchronousLuaContext(final Context context) {
+                this.context = context;
+            }
+
             @Override
             public long issueMainThreadTask(@NotNull final LuaTask task) throws LuaException {
-                throw new LimitReachedException();
+                // Hacky way to get around declaring a `throws LimitReachedException`
+                context.consumeCallBudget(Double.POSITIVE_INFINITY);
+                return 0;
             }
 
             @Override
             public MethodResult executeMainThreadTask(@NotNull final LuaTask task) throws LuaException {
-                throw new LimitReachedException();
+                context.consumeCallBudget(Double.POSITIVE_INFINITY);
+                return null;
             }
         }
     }
