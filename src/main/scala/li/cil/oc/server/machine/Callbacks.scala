@@ -59,8 +59,9 @@ object Callbacks {
       environment match {
         case peripheral: ManagedPeripheral =>
           (priority, () => {
+            val direct = peripheral.directMethods()
             for (name <- peripheral.methods() if filter(name)) {
-              callbacks += name -> new PeripheralCallback(name)
+              callbacks += name -> new PeripheralCallback(name, direct.contains(name))
             }
             staticAnalyze(environment.getClass, Option(filter), Option(callbacks))
           })
@@ -123,7 +124,7 @@ object Callbacks {
     override def apply(instance: AnyRef, context: Context, args: Arguments) = callWrapper.call(instance, context, args)
   }
 
-  class PeripheralCallback(name: String) extends Callback(new PeripheralAnnotation(name)) {
+  class PeripheralCallback(name: String, direct: Boolean) extends Callback(new PeripheralAnnotation(name, direct)) {
     override def apply(instance: AnyRef, context: Context, args: Arguments) =
       instance match {
         case peripheral: ManagedPeripheral => peripheral.invoke(name, context, args)

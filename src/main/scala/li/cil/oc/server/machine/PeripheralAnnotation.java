@@ -8,9 +8,11 @@ import java.lang.annotation.Annotation;
 @SuppressWarnings("ClassExplicitlyAnnotation")
 public class PeripheralAnnotation implements Callback {
     private final String name;
+    private final boolean isDirect;
 
-    public PeripheralAnnotation(final String name) {
+    public PeripheralAnnotation(final String name, boolean isDirect) {
         this.name = name;
+        this.isDirect = isDirect;
     }
 
     @Override
@@ -20,7 +22,7 @@ public class PeripheralAnnotation implements Callback {
 
     @Override
     public boolean direct() {
-        return false;
+        return isDirect;
     }
 
     @Override

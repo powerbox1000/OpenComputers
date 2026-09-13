@@ -15,6 +15,7 @@ import li.cil.oc.api.Network;
 import li.cil.oc.api.driver.NamedBlock;
 import li.cil.oc.api.machine.Arguments;
 import li.cil.oc.api.machine.Context;
+import li.cil.oc.api.machine.LimitReachedException;
 import li.cil.oc.api.network.BlacklistedPeripheral;
 import li.cil.oc.api.network.ManagedEnvironment;
 import li.cil.oc.api.network.Node;
@@ -95,6 +96,7 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
     public static class Environment extends li.cil.oc.api.prefab.AbstractManagedEnvironment implements li.cil.oc.api.network.ManagedPeripheral, NamedBlock {
         protected final IPeripheral peripheral;
         protected final String[] methodNames;
+        protected final String[] directMethodNames;
         protected final Map<String, FakeComputerAccess> accesses = new HashMap<>();
         protected final Map<String, Method> reflectedMethods = new HashMap<>();
         protected final Map<String, Integer> dynamicMethods = new HashMap<>();
@@ -104,6 +106,7 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
             this.peripheral = peripheral;
 
             final LinkedHashSet<String> names = new LinkedHashSet<>();
+            final LinkedHashSet<String> direct = new LinkedHashSet<>();
 
             if (peripheral instanceof IDynamicPeripheral dynamic) {
                 final String[] dynamicNames = dynamic.getMethodNames();
@@ -112,6 +115,7 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
                     final String name = dynamicNames[i];
                     if (dynamicMethods.putIfAbsent(name, i) == null) {
                         names.add(name);
+                        direct.add(name); // IDynamicPeripheral methods are always called from executor thread
                     }
                 }
             }
@@ -128,30 +132,37 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
 
                 final String[] exposedNames = annotation.value();
                 if (exposedNames.length == 0) {
-                    addReflectedMethod(method.getName(), method, names);
+                    addReflectedMethod(method.getName(), method, !annotation.mainThread(), names, direct);
                 } else {
                     for (String name : exposedNames) {
-                        addReflectedMethod(name, method, names);
+                        addReflectedMethod(name, method, !annotation.mainThread(), names, direct);
                     }
                 }
             }
 
             methodNames = names.toArray(new String[0]);
+            directMethodNames = direct.toArray(new String[0]);
 
             setNode(Network.newNode(this, Visibility.Network).create());
         }
 
-        private void addReflectedMethod(final String name, final Method method, final Set<String> names) {
+        private void addReflectedMethod(final String name, final Method method, boolean isDirect, final Set<String> names, final Set<String> direct) {
             // Preserve the existing dynamic-method precedence if a peripheral
             // happens to use the same name for both APIs.
             if (!dynamicMethods.containsKey(name) && reflectedMethods.putIfAbsent(name, method) == null) {
                 names.add(name);
+                if (isDirect) direct.add(name);
             }
         }
 
         @Override
         public String[] methods() {
             return methodNames;
+        }
+
+        @Override
+        public String[] directMethods() {
+            return directMethodNames;
         }
 
         @Override
@@ -165,7 +176,13 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
             }
 
             final Object[] argArray = CallableHelper.convertArguments(args);
-            final ILuaContext luaContext = new SynchronousLuaContext(context, nextTaskId);
+            final ILuaContext luaContext;
+
+            if (Arrays.stream(directMethodNames).anyMatch(name::equals)) {
+                luaContext = new AsynchronousLuaContext();
+            } else {
+                luaContext = new SynchronousLuaContext(context, nextTaskId);
+            }
 
             if (peripheral instanceof IDynamicPeripheral dynamic && dynamicMethods.containsKey(name)) {
                 return dynamic.callMethod(
@@ -250,6 +267,12 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
 
             if (type.isInstance(value)) {
                 return value;
+            }
+
+            if (Enum.class.isAssignableFrom(type) && type != Enum.class && value instanceof String) {
+                for (var member : ((Class<? extends Enum>) type).getEnumConstants()) {
+                    if (member.name().equalsIgnoreCase((String) value)) return member;
+                }
             }
 
             if (type == int.class || type == Integer.class) {
@@ -539,6 +562,23 @@ public final class DriverPeripheral implements li.cil.oc.api.driver.DriverBlock 
                 }
 
                 context.signal("task_completed", signal);
+            }
+        }
+
+        /**
+         * This is a very hacky way to synchronize direct calls with the main thread.
+         * 
+         * TODO find a better solution
+         */
+        public static final class AsynchronousLuaContext implements ILuaContext {
+            @Override
+            public long issueMainThreadTask(@NotNull final LuaTask task) throws LuaException {
+                throw new LimitReachedException();
+            }
+
+            @Override
+            public MethodResult executeMainThreadTask(@NotNull final LuaTask task) throws LuaException {
+                throw new LimitReachedException();
             }
         }
     }

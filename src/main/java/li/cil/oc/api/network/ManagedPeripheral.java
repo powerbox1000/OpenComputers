@@ -24,6 +24,23 @@ public interface ManagedPeripheral {
     String[] methods();
 
     /**
+     * Get the list of direct methods provided by this environment, in
+     * <em>addition</em> to methods marked as callbacks.
+     * <br>
+     * The returned strings are considered to be a subset of those returned by
+     * {@link #methods()} for backwards compatability, and any strings returned
+     * by this method not returned by {@link #methods()} will be silently ignored.
+     * <br>
+     * Returning {@code null} has the same meaning as returning an empty array,
+     * that being that there are no direct methods.
+     *
+     * @return the list of direct methods provided by the environment.
+     */
+    default String[] directMethods() {
+        return null;
+    }
+
+    /**
      * Calls a method from the list provided by {@link #methods()}.
      * <br>
      *
