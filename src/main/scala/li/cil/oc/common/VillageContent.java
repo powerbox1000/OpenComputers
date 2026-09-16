@@ -71,25 +71,27 @@ public final class VillageContent {
         if (!IT_NERD.get().equals(event.getType())) return;
 
         event.getTrades().put(1, List.of(
-                new VillagerTrades.EmeraldForItems(item("transistor"), 4, 1, 12),
-                new VillagerTrades.EmeraldForItems(item("disk"), 2, 1, 12),
-                new VillagerTrades.ItemsForEmeralds(item("printedcircuitboard"), 2, 1, 12),
-                new VillagerTrades.ItemsForEmeralds(item("transistor"), 4, 1, 12)
+                new VillagerTrades.EmeraldForItems(item("transistor"), 4, 24, 12),
+                new VillagerTrades.EmeraldForItems(item("disk"), 2, 4, 12),
+                new VillagerTrades.EmeraldForItems(item("printedcircuitboard"), 2, 12, 12),
         ));
         event.getTrades().put(2, List.of(
                 new VillagerTrades.EmeraldForItems(item("circuitboard"), 3, 1, 10),
-                new VillagerTrades.ItemsForEmeralds(item("cpu1"), 1, 4, 8),
-                new VillagerTrades.ItemsForEmeralds(item("ram1"), 1, 5, 8)
+                new VillagerTrades.EmeraldForItems(item("floppy"), 4, 1, 10),
+                new VillagerTrades.ItemsForEmeralds(item("cpu1"), 24, 4, 8),
+                new VillagerTrades.ItemsForEmeralds(item("ram1"), 24, 5, 8)
         ));
         event.getTrades().put(3, List.of(
-                new VillagerTrades.ItemsForEmeralds(item("hdd1"), 1, 8, 6),
-                new VillagerTrades.ItemsForEmeralds(item("diskdrivemountable"), 1, 10, 4),
-                new LootDiskListing(8, 3, 10)
+                new VillagerTrades.EmeraldForItems(item("eeprom"), 4, 1, 10),
+                new VillagerTrades.ItemsForEmeralds(item("hdd1"), 24, 8, 6),
+                new VillagerTrades.ItemsForEmeralds(item("graphicscard1"), 32, 12, 4),
+                new LootDiskListing(12, 3, 10)
         ));
         event.getTrades().put(4, List.of(
-                new LootDiskListing(6, 2, 15),
-                new VillagerTrades.ItemsForEmeralds(item("cpu2"), 1, 12, 4),
-                new VillagerTrades.ItemsForEmeralds(item("ram2"), 1, 12, 4)
+                new LootDiskListing(12, 2, 15),
+                new VillagerTrades.ItemsForEmeralds(item("cpu2"), 48, 12, 4),
+                new VillagerTrades.ItemsForEmeralds(item("ram2"), 48, 12, 4),
+                new VillagerTrades.ItemsForEmeralds(item("ssd1"), 48, 8, 6),
         ));
     }
 
