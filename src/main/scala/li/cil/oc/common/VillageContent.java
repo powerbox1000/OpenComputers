@@ -73,7 +73,7 @@ public final class VillageContent {
         event.getTrades().put(1, List.of(
                 new VillagerTrades.EmeraldForItems(item("transistor"), 4, 24, 12),
                 new VillagerTrades.EmeraldForItems(item("disk"), 2, 4, 12),
-                new VillagerTrades.EmeraldForItems(item("printedcircuitboard"), 2, 12, 12),
+                new VillagerTrades.EmeraldForItems(item("printedcircuitboard"), 2, 12, 12)
         ));
         event.getTrades().put(2, List.of(
                 new VillagerTrades.EmeraldForItems(item("circuitboard"), 3, 1, 10),
@@ -91,7 +91,7 @@ public final class VillageContent {
                 new LootDiskListing(12, 2, 15),
                 new VillagerTrades.ItemsForEmeralds(item("cpu2"), 48, 12, 4),
                 new VillagerTrades.ItemsForEmeralds(item("ram2"), 48, 12, 4),
-                new VillagerTrades.ItemsForEmeralds(item("ssd1"), 48, 8, 6),
+                new VillagerTrades.ItemsForEmeralds(item("ssd1"), 48, 8, 6)
         ));
     }
 
