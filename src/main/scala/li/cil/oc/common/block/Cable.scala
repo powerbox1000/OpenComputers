@@ -3,6 +3,7 @@ package li.cil.oc.common.block
 import com.mojang.serialization.MapCodec
 import li.cil.oc.common.block.Cable.CODEC
 import li.cil.oc.common.block.property.PropertyCableConnection
+import li.cil.oc.integration.multipart.ModCBMultipart
 import li.cil.oc.common.blockentity
 import li.cil.oc.common.capabilities.Capabilities
 import li.cil.oc.util.{Color, ItemColorizer}
@@ -138,8 +139,10 @@ object Cable {
     if (neighborTileEntity != null && neighborTileEntity.getLevel != null) {
       val neighborHasNode = hasNetworkNode(neighborTileEntity, fromSide.getOpposite)
       val canConnectColor = canConnectBasedOnColor(tileEntity, neighborTileEntity, defaultColor)
-      if (neighborHasNode && canConnectColor) {
-        if (fromState.is(state.getBlock)) {
+      // The checked multipart cell is the neighbor; its direction back to this cable is opposite.
+      val canConnectMultipart = ModCBMultipart.canConnectFromSide(world, fromPos, fromSide.getOpposite)
+      if (neighborHasNode && canConnectColor && canConnectMultipart) {
+        if (fromState.is(state.getBlock) || ModCBMultipart.isCable(world, fromPos)) {
           return CableHelper.helperSetCableShapeState(state, fromSide, PropertyCableConnection.Shape.CABLE)
         }
         else {
