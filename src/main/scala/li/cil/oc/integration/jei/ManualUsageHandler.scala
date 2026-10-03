@@ -30,11 +30,13 @@ object ManualUsageHandler {
 
   def getRecipes(registration: IRecipeRegistration): util.List[ManualUsageRecipe] =
     registration.getIngredientManager.getAllItemStacks.collect {
-      case stack: ItemStack => api.Manual.pathFor(stack) match {
-        case s: String => Option(new ManualUsageRecipe(stack, s))
-        case _ => None
-      }
+      case stack: ItemStack => recipeFor(stack)
     }.flatten.toList
+
+  def recipeFor(stack: ItemStack): Option[ManualUsageRecipe] = api.Manual.pathFor(stack) match {
+    case path: String => Some(new ManualUsageRecipe(stack, path))
+    case _ => None
+  }
 
   class ManualUsageRecipe(val stack: ItemStack, val path: String)
 

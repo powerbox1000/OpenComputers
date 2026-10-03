@@ -15,6 +15,7 @@ import mezz.jei.api.runtime.IJeiRuntime
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
+import net.neoforged.fml.ModList
 
 import scala.jdk.CollectionConverters._
 
@@ -23,13 +24,17 @@ class ModPluginOpenComputers extends IModPlugin {
   override def getPluginUid: ResourceLocation = ResourceLocation.fromNamespaceAndPath(OpenComputers.ID, "jei_plugin")
 
   override def registerCategories(registry: IRecipeCategoryRegistration): Unit = {
-    registry.addRecipeCategories(ManualUsageHandler.ManualUsageRecipeCategory)
-    registry.addRecipeCategories(CallbackDocHandler.CallbackDocRecipeCategory)
+    if (!ModList.get().isLoaded("emi")) {
+      registry.addRecipeCategories(ManualUsageHandler.ManualUsageRecipeCategory)
+      registry.addRecipeCategories(CallbackDocHandler.CallbackDocRecipeCategory)
+    }
   }
 
   override def registerRecipes(registration: IRecipeRegistration): Unit = {
-    registration.addRecipes(ManualUsageHandler.RecipeType, ManualUsageHandler.getRecipes(registration))
-    registration.addRecipes(CallbackDocHandler.RecipeType, CallbackDocHandler.getRecipes(registration))
+    if (!ModList.get().isLoaded("emi")) {
+      registration.addRecipes(ManualUsageHandler.RecipeType, ManualUsageHandler.getRecipes(registration))
+      registration.addRecipes(CallbackDocHandler.RecipeType, CallbackDocHandler.getRecipes(registration))
+    }
   }
 
   override def registerGuiHandlers(registration: IGuiHandlerRegistration): Unit =
@@ -50,11 +55,15 @@ class ModPluginOpenComputers extends IModPlugin {
     stackUnderMouse = (_, _, _) => StackOption(jeiRuntime.getIngredientListOverlay.getIngredientUnderMouse(VanillaTypes.ITEM_STACK))
     ModJEI.runtime = Option(jeiRuntime)
     ModJEI.ingredientRegistry = Option(jeiRuntime.getIngredientManager)
-    val hiddenStacks = ContentVisibility.hiddenItems.asScala.map(new ItemStack(_)).toSeq.asJava
-    if (!hiddenStacks.isEmpty) {
-      jeiRuntime.getIngredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hiddenStacks)
+    // TMRV cannot apply JEI runtime registry changes. EMI handles configured
+    // visibility natively, and native EMI recipes replace these two JEI types.
+    if (!ModList.get().isLoaded("toomanyrecipeviewers")) {
+      val hiddenStacks = ContentVisibility.hiddenItems.asScala.map(new ItemStack(_)).toSeq.asJava
+      if (!hiddenStacks.isEmpty) {
+        jeiRuntime.getIngredientManager.removeIngredientsAtRuntime(VanillaTypes.ITEM_STACK, hiddenStacks)
+      }
+      Option(Loot.defaultEEPROM).filter(!_.isEmpty).foreach(ModJEI.addItemAtRuntime)
     }
-    Option(Loot.defaultEEPROM).filter(!_.isEmpty).foreach(ModJEI.addItemAtRuntime)
   }
 
   override def onRuntimeUnavailable(): Unit = {

@@ -34,23 +34,25 @@ object CallbackDocHandler {
 
   def getRecipes(registration: IRecipeRegistration): util.List[CallbackDocRecipe] =
     registration.getIngredientManager.getAllItemStacks.collect {
-      case stack: ItemStack =>
-        val callbacks = api.Driver.environmentsFor(stack).flatMap(getCallbacks).toBuffer
-        if (callbacks.nonEmpty) {
-          val pages = mutable.Buffer.empty[String]
-          val lastPage = callbacks.toArray.sorted.foldLeft("") { (last, doc) =>
-            if (last.linesIterator.length + 2 + doc.linesIterator.length > 12) {
-              last.linesIterator.grouped(12).map(_.mkString("\n")).foreach(pages += _)
-              doc
-            }
-            else if (last.nonEmpty) last + "\n\n" + doc
-            else doc
-          }
-          lastPage.linesIterator.grouped(12).map(_.mkString("\n")).foreach(pages += _)
-          Option(pages.map(page => new CallbackDocRecipe(stack, page)))
-        }
-        else None
-    }.flatten.flatten.toList
+      case stack: ItemStack => recipesFor(stack)
+    }.flatten.toList
+
+  def recipesFor(stack: ItemStack): Seq[CallbackDocRecipe] = {
+    val callbacks = api.Driver.environmentsFor(stack).flatMap(getCallbacks).toBuffer
+    if (callbacks.isEmpty) return Seq.empty
+
+    val pages = mutable.Buffer.empty[String]
+    val lastPage = callbacks.toArray.sorted.foldLeft("") { (last, doc) =>
+      if (last.linesIterator.length + 2 + doc.linesIterator.length > 12) {
+        last.linesIterator.grouped(12).map(_.mkString("\n")).foreach(pages += _)
+        doc
+      }
+      else if (last.nonEmpty) last + "\n\n" + doc
+      else doc
+    }
+    lastPage.linesIterator.grouped(12).map(_.mkString("\n")).foreach(pages += _)
+    pages.map(page => new CallbackDocRecipe(stack, page)).toSeq
+  }
 
   private def getCallbacks(env: Class[_]) = if (env != null) {
     Callbacks.fromClass(env).map { case (name, callback) =>

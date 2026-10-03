@@ -4,6 +4,7 @@ import li.cil.oc.common.EventHandler
 import mezz.jei.api.constants.VanillaTypes
 import mezz.jei.api.runtime.{IIngredientManager, IJeiRuntime}
 import net.minecraft.world.item.ItemStack
+import net.neoforged.fml.ModList
 
 import scala.collection.JavaConverters.seqAsJavaList
 import scala.collection.mutable
@@ -18,7 +19,8 @@ object ModJEI {
   private var scheduled = false
 
   def addDiskAtRuntime(stack: ItemStack): Unit = ingredientRegistry.foreach { registry =>
-    if (!registry.getAllIngredients(VanillaTypes.ITEM_STACK).exists(ItemStack.matches(_, stack))) {
+    if (!ModList.get().isLoaded("toomanyrecipeviewers") &&
+      !registry.getAllIngredients(VanillaTypes.ITEM_STACK).exists(ItemStack.matches(_, stack))) {
       disksForRuntime += stack
       if (!scheduled) {
         EventHandler.scheduleClient { () =>
@@ -32,7 +34,8 @@ object ModJEI {
   }
 
   def addItemAtRuntime(stack: ItemStack): Unit = ingredientRegistry.foreach { registry =>
-    if (!registry.getAllIngredients(VanillaTypes.ITEM_STACK).exists(ItemStack.matches(_, stack))) {
+    if (!ModList.get().isLoaded("toomanyrecipeviewers") &&
+      !registry.getAllIngredients(VanillaTypes.ITEM_STACK).exists(ItemStack.matches(_, stack))) {
       EventHandler.scheduleClient { () =>
         ingredientRegistry.foreach { currentRegistry =>
           if (!currentRegistry.getAllIngredients(VanillaTypes.ITEM_STACK).exists(ItemStack.matches(_, stack))) {
